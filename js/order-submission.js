@@ -4,14 +4,16 @@ window.breakfastOrderSubmission = {
       throw new Error("請確認桌號與餐點內容。");
     }
 
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
-
-    const timeCode = Date.now().toString(36).slice(-5).toUpperCase();
-    return {
-      ok: true,
-      demo: true,
-      orderId: `DEMO-${timeCode}`,
-      table: order.table
-    };
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        table: order.table,
+        items: order.items.map(({ id, quantity, note }) => ({ id, quantity, note }))
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || "訂單送出失敗，請稍後重試。");
+    return result;
   }
 };

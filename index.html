@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f2f6ef">
-  <meta name="description" content="朝日早餐店內用 QR code 點餐示範頁面。">
+  <meta name="description" content="朝日早餐店內用 QR code 線上點餐。">
   <title>朝日早餐｜線上點餐</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,11 +44,6 @@
       <span class="welcome-sun" aria-hidden="true">好<br>日</span>
     </section>
 
-    <div class="demo-notice" role="note">
-      <span class="notice-icon" aria-hidden="true">i</span>
-      <span><strong>體驗模式</strong>　此頁為點餐展示，送出後不會傳到店家。</span>
-    </div>
-
     <div class="order-layout">
       <section class="menu-section" aria-labelledby="menu-heading">
         <div class="section-heading">
@@ -64,8 +59,10 @@
           </label>
         </div>
         <nav class="category-nav" id="category-nav" aria-label="菜單分類"></nav>
-        <div class="menu-count" id="menu-count" aria-live="polite"></div>
-        <div class="product-grid" id="product-grid"></div>
+        <div class="menu-count" id="menu-count" aria-live="polite">正在載入菜單…</div>
+        <div class="product-grid" id="product-grid" aria-live="polite" aria-busy="true">
+          <p class="menu-loading">正在連線取得最新菜單…</p>
+        </div>
         <p class="menu-footnote">餐點照片僅供參考，實際供應品項與價格以店內公告為準。</p>
       </section>
 
@@ -89,7 +86,6 @@
           <button class="primary-button checkout-button" id="checkout-button" type="button" disabled>
             <span>確認餐點</span><span aria-hidden="true">→</span>
           </button>
-          <p class="cart-disclaimer">送出為示範流程，不會傳送至店家</p>
         </div>
       </aside>
     </div>

@@ -1,5 +1,4 @@
 (() => {
-  const { categories, products } = window.BREAKFAST_MENU;
   const elements = {
     categoryNav: document.querySelector("#category-nav"),
     productGrid: document.querySelector("#product-grid"),
@@ -31,12 +30,16 @@
     checkoutContent: document.querySelector("#checkout-content")
   };
 
+  let categories = [];
+  let products = [];
   let activeCategory = "popular";
   let searchTerm = "";
   let selectedProduct = null;
   let selectedQuantity = 1;
   let tableNumber = new URLSearchParams(window.location.search).get("table")?.trim() || "";
   let isSubmitting = false;
+  const MAX_ORDER_LINES = 50;
+  const MAX_ITEM_QUANTITY = 99;
   const cart = [];
 
   const formatPrice = (amount) => `NT$ ${amount.toLocaleString("zh-TW")}`;
@@ -62,13 +65,13 @@
 
     elements.menuCount.textContent = `共 ${visibleProducts.length} 樣餐點`;
     if (visibleProducts.length === 0) {
-      elements.productGrid.innerHTML = '<div class="empty-results">沒有找到符合的餐點，試試其他關鍵字。</div>';
+      elements.productGrid.innerHTML = `<div class="empty-results">${products.length ? "沒有找到符合的餐點，試試其他關鍵字。" : "目前沒有供應中的餐點。"}</div>`;
       return;
     }
 
     elements.productGrid.innerHTML = visibleProducts.map((product) => `
       <article class="product-card">
-        <img class="product-image" src="${imageUrl(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position:${product.imagePosition}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=720&q=82'">
+        <img class="product-image" src="${imageUrl(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position:${escapeHtml(product.imagePosition)}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=720&q=82'">
         <div class="product-info">
           <div class="product-title-row">
             <h3 class="product-title">${escapeHtml(product.name)}</h3>
@@ -77,7 +80,7 @@
           <p class="product-description">${escapeHtml(product.description)}</p>
           <div class="product-card-bottom">
             <span class="product-tag">${escapeHtml(product.tag)}</span>
-            <button class="select-button" type="button" data-product="${product.id}" aria-label="選擇${escapeHtml(product.name)}">
+            <button class="select-button" type="button" data-product="${escapeHtml(product.id)}" aria-label="選擇${escapeHtml(product.name)}">
               選擇 <span class="select-plus" aria-hidden="true">+</span>
             </button>
           </div>
@@ -95,7 +98,7 @@
           <div class="quantity-control" aria-label="${escapeHtml(item.name)}數量">
             <button type="button" data-cart-action="decrease" data-index="${index}" aria-label="減少${escapeHtml(item.name)}">−</button>
             <span>${item.quantity}</span>
-            <button type="button" data-cart-action="increase" data-index="${index}" aria-label="增加${escapeHtml(item.name)}">+</button>
+            <button type="button" data-cart-action="increase" data-index="${index}" aria-label="增加${escapeHtml(item.name)}" ${item.quantity >= MAX_ITEM_QUANTITY ? "disabled" : ""}>+</button>
           </div>
         </div>
         <span class="cart-line-price">${formatPrice(item.price * item.quantity)}</span>
@@ -146,9 +149,10 @@
         <p>${escapeHtml(selectedProduct.description)}</p>
         <label class="dialog-label" for="product-note">餐點備註（選填）</label>
         <textarea class="product-note" id="product-note" maxlength="80" placeholder="例如：吐司不烤、醬少一點"></textarea>
+        <p class="submit-error" id="product-quantity-error" role="alert" hidden></p>
         <div class="product-dialog-actions">
           <div class="quantity-control" aria-label="餐點數量">
-            <button type="button" data-product-quantity="decrease" aria-label="減少數量">−</button>
+            <button type="button" data-product-quantity="decrease" aria-label="減少數量" disabled>−</button>
             <span id="selected-quantity">1</span>
             <button type="button" data-product-quantity="increase" aria-label="增加數量">+</button>
           </div>
@@ -161,7 +165,20 @@
 
   function addSelectedProduct() {
     const note = elements.productDialogContent.querySelector("#product-note").value.trim();
+    const error = elements.productDialogContent.querySelector("#product-quantity-error");
+    error.hidden = true;
+    error.textContent = "";
     const existing = cart.find((item) => item.id === selectedProduct.id && item.note === note);
+    if (existing && existing.quantity + selectedQuantity > MAX_ITEM_QUANTITY) {
+      error.textContent = `同一餐點與備註的數量上限為 ${MAX_ITEM_QUANTITY}，請先調整購物車中的數量。`;
+      error.hidden = false;
+      return;
+    }
+    if (!existing && cart.length >= MAX_ORDER_LINES) {
+      error.textContent = `每筆訂單最多 ${MAX_ORDER_LINES} 個餐點明細，請先調整購物車。`;
+      error.hidden = false;
+      return;
+    }
     if (existing) existing.quantity += selectedQuantity;
     else cart.push({ ...selectedProduct, quantity: selectedQuantity, note });
     elements.productDialog.close();
@@ -171,7 +188,7 @@
   function updateCartItem(action, index) {
     const item = cart[index];
     if (!item) return;
-    if (action === "increase") item.quantity += 1;
+    if (action === "increase" && item.quantity < MAX_ITEM_QUANTITY) item.quantity += 1;
     if (action === "decrease") item.quantity -= 1;
     if (action === "remove" || item.quantity <= 0) cart.splice(index, 1);
     renderCart();
@@ -195,7 +212,7 @@
       `).join("")}</div>
       <div class="checkout-total"><span>總計</span><strong>${formatPrice(total)}</strong></div>
       <p class="checkout-payment">到店付款・內用</p>
-      <button class="primary-button" id="submit-order-button" type="button"><span>送出示範訂單</span><span aria-hidden="true">→</span></button>
+      <button class="primary-button" id="submit-order-button" type="button"><span>送出訂單</span><span aria-hidden="true">→</span></button>
       <button class="checkout-cancel" id="checkout-cancel" type="button">返回修改餐點</button>
     `;
     elements.cartDialog.close();
@@ -207,10 +224,10 @@
     isSubmitting = true;
     const button = elements.checkoutContent.querySelector("#submit-order-button");
     button.disabled = true;
-    button.innerHTML = "<span>示範送出中…</span><span aria-hidden=\"true\">…</span>";
+    button.innerHTML = "<span>訂單送出中…</span><span aria-hidden=\"true\">…</span>";
     const order = {
       table: tableNumber,
-      items: cart.map(({ id, name, price, quantity, note }) => ({ id, name, price, quantity, note }))
+      items: cart.map(({ id, quantity, note }) => ({ id, quantity, note }))
     };
 
     try {
@@ -219,10 +236,10 @@
       isSubmitting = false;
       renderCart();
       elements.checkoutContent.innerHTML = `
-        <p class="eyebrow">DEMO ORDER</p>
-        <h2 id="checkout-heading">早餐清單已建立</h2>
-        <div class="demo-result"><span class="demo-result-mark" aria-hidden="true">✓</span><p>示範訂單編號</p><strong>${escapeHtml(result.orderId)}</strong></div>
-        <p class="demo-warning">這是點餐流程展示，訂單沒有傳送到店家。請勿依此頁面等待餐點。</p>
+        <p class="eyebrow">ORDER CONFIRMED</p>
+        <h2 id="checkout-heading">訂單已送出</h2>
+        <div class="demo-result"><span class="demo-result-mark" aria-hidden="true">✓</span><p>訂單編號</p><strong>${escapeHtml(result.orderId)}</strong></div>
+        <p class="checkout-payment">桌號 ${escapeHtml(result.table)}・到店付款・總計 ${formatPrice(result.total)}</p>
         <button class="primary-button" id="finish-order-button" type="button"><span>回到菜單</span><span aria-hidden="true">→</span></button>
       `;
     } catch (error) {
@@ -236,7 +253,7 @@
       const retryButton = elements.checkoutContent.querySelector("#submit-order-button");
       if (retryButton) {
         retryButton.disabled = false;
-        retryButton.innerHTML = "<span>重試送出</span><span aria-hidden=\"true\">→</span>";
+        retryButton.querySelector("span:first-child").textContent = "重試送出";
       }
     }
   }
@@ -295,9 +312,12 @@
   elements.productDialogContent.addEventListener("click", (event) => {
     const quantityButton = event.target.closest("[data-product-quantity]");
     if (quantityButton) {
-      selectedQuantity = Math.max(1, selectedQuantity + (quantityButton.dataset.productQuantity === "increase" ? 1 : -1));
+      const direction = quantityButton.dataset.productQuantity === "increase" ? 1 : -1;
+      selectedQuantity = Math.min(MAX_ITEM_QUANTITY, Math.max(1, selectedQuantity + direction));
       elements.productDialogContent.querySelector("#selected-quantity").textContent = selectedQuantity;
       elements.productDialogContent.querySelector("#add-product-button span:last-child").textContent = formatPrice(selectedProduct.price * selectedQuantity);
+      elements.productDialogContent.querySelector('[data-product-quantity="decrease"]').disabled = selectedQuantity === 1;
+      elements.productDialogContent.querySelector('[data-product-quantity="increase"]').disabled = selectedQuantity === MAX_ITEM_QUANTITY;
     }
     if (event.target.closest("#add-product-button")) addSelectedProduct();
   });
@@ -318,9 +338,39 @@
     if (event.target.closest("#finish-order-button")) elements.checkoutDialog.close();
   });
 
-  updateTableLabel();
-  renderCategories();
-  renderMenu();
   renderCart();
+  updateTableLabel();
+
+  async function loadMenu() {
+    elements.productGrid.setAttribute("aria-busy", "true");
+    elements.menuCount.textContent = "正在載入菜單…";
+    elements.productGrid.innerHTML = '<p class="menu-loading">正在連線取得最新菜單…</p>';
+    try {
+      const menu = await window.breakfastMenuApi.load();
+      categories = menu.categories;
+      products = menu.products;
+      if (!categories.some((category) => category.id === activeCategory)) {
+        activeCategory = categories[0]?.id || "all";
+      }
+      elements.productGrid.setAttribute("aria-busy", "false");
+      renderCategories();
+      renderMenu();
+    } catch (error) {
+      elements.menuCount.textContent = "菜單暫時無法載入";
+      elements.productGrid.setAttribute("aria-busy", "false");
+      elements.productGrid.innerHTML = `
+        <div class="menu-error" role="alert">
+          <p>${escapeHtml(error.message || "連線失敗，請稍後重試。")}</p>
+          <button class="select-button" id="retry-menu-button" type="button">重新載入</button>
+        </div>
+      `;
+    }
+  }
+
+  elements.productGrid.addEventListener("click", (event) => {
+    if (event.target.closest("#retry-menu-button")) loadMenu();
+  });
+
+  loadMenu();
   if (!tableNumber) window.setTimeout(() => showTableDialog(), 350);
 })();
