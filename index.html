@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f6ef">
+  <meta name="description" content="朝日早餐店內用 QR code 點餐示範頁面。">
+  <title>朝日早餐｜線上點餐</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="js/menu.js"></script>
+  <script defer src="js/order-submission.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="朝日早餐首頁">
+      <span class="brand-mark" aria-hidden="true">朝</span>
+      <span class="brand-name">朝日早餐<span>GOOD MORNING, EVERY DAY</span></span>
+    </a>
+    <div class="header-actions">
+      <button class="table-chip" id="table-button" type="button" aria-label="設定內用桌號">
+        <span class="table-chip-dot" aria-hidden="true"></span>
+        <span id="table-label">設定桌號</span>
+        <span class="chip-edit" aria-hidden="true">編輯</span>
+      </button>
+      <span class="open-status"><span aria-hidden="true"></span> 今日營業中</span>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="welcome-band" aria-labelledby="welcome-title">
+      <div class="welcome-copy">
+        <p class="eyebrow"><span class="sun-mark" aria-hidden="true">✳</span> 新的一天，從早餐開始</p>
+        <h1 id="welcome-title">早安，今天想吃點什麼？</h1>
+        <p class="welcome-note">現點現做，熱熱上桌。選好餐點後送出，餐費於店內付款。</p>
+        <div class="welcome-meta"><span>內用點餐</span><span class="meta-separator" aria-hidden="true"></span><span>約 10–15 分鐘</span></div>
+      </div>
+      <div class="welcome-photo" role="img" aria-label="剛準備好的早餐吐司與煎蛋">
+        <span class="photo-caption">MAKE IT A GOOD DAY</span>
+      </div>
+      <span class="welcome-sun" aria-hidden="true">好<br>日</span>
+    </section>
+
+    <div class="demo-notice" role="note">
+      <span class="notice-icon" aria-hidden="true">i</span>
+      <span><strong>體驗模式</strong>　此頁為點餐展示，送出後不會傳到店家。</span>
+    </div>
+
+    <div class="order-layout">
+      <section class="menu-section" aria-labelledby="menu-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">GOOD FOOD, GOOD MOOD</p>
+            <h2 id="menu-heading">早餐菜單</h2>
+          </div>
+          <label class="search-box">
+            <span class="search-icon" aria-hidden="true"></span>
+            <span class="sr-only">搜尋餐點</span>
+            <input id="menu-search" type="search" placeholder="搜尋想吃的…" autocomplete="off">
+            <kbd>/</kbd>
+          </label>
+        </div>
+        <nav class="category-nav" id="category-nav" aria-label="菜單分類"></nav>
+        <div class="menu-count" id="menu-count" aria-live="polite"></div>
+        <div class="product-grid" id="product-grid"></div>
+        <p class="menu-footnote">餐點照片僅供參考，實際供應品項與價格以店內公告為準。</p>
+      </section>
+
+      <aside class="cart-panel" aria-labelledby="cart-heading">
+        <div class="cart-heading-row">
+          <div>
+            <p class="eyebrow">YOUR BREAKFAST</p>
+            <h2 id="cart-heading">我的餐點 <span class="cart-count" id="cart-count">0</span></h2>
+          </div>
+          <span class="cart-bag" aria-hidden="true">+</span>
+        </div>
+        <div class="cart-list" id="cart-list"></div>
+        <div class="cart-empty" id="cart-empty">
+          <span class="empty-plate" aria-hidden="true"><span></span></span>
+          <p>還沒有選擇餐點</p>
+          <span>從喜歡的早餐開始吧</span>
+        </div>
+        <div class="cart-bottom">
+          <div class="subtotal-row"><span>小計</span><strong id="cart-total">NT$ 0</strong></div>
+          <p class="payment-note"><span aria-hidden="true">●</span> 到店付款・內用</p>
+          <button class="primary-button checkout-button" id="checkout-button" type="button" disabled>
+            <span>確認餐點</span><span aria-hidden="true">→</span>
+          </button>
+          <p class="cart-disclaimer">送出為示範流程，不會傳送至店家</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="mobile-cart-bar" id="mobile-cart-bar" hidden>
+    <button class="mobile-cart-button" id="mobile-cart-button" type="button">
+      <span class="mobile-cart-count" id="mobile-cart-count">0</span>
+      <span>查看餐點</span>
+      <strong id="mobile-cart-total">NT$ 0</strong>
+      <span class="mobile-cart-arrow" aria-hidden="true">→</span>
+    </button>
+  </div>
+
+  <dialog class="site-dialog product-dialog" id="product-dialog" aria-labelledby="product-dialog-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="icon-button dialog-close" aria-label="關閉">×</button></form>
+    <div class="product-dialog-content" id="product-dialog-content"></div>
+  </dialog>
+
+  <dialog class="site-dialog table-dialog" id="table-dialog" aria-labelledby="table-dialog-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="icon-button dialog-close" aria-label="關閉">×</button></form>
+    <div class="dialog-copy">
+      <p class="eyebrow">DINE IN</p>
+      <h2 id="table-dialog-title">設定內用桌號</h2>
+      <p id="table-dialog-message">掃描桌邊 QR code 通常會自動帶入桌號，也可以手動輸入。</p>
+    </div>
+    <form id="table-form" class="table-form">
+      <label for="table-input">桌號</label>
+      <input id="table-input" name="table" type="text" placeholder="例如 A03" maxlength="12" autocomplete="off" required>
+      <button class="primary-button" type="submit"><span>確認桌號</span><span aria-hidden="true">→</span></button>
+    </form>
+  </dialog>
+
+  <dialog class="site-dialog cart-dialog" id="cart-dialog" aria-labelledby="mobile-cart-heading">
+    <div class="dialog-header">
+      <div><p class="eyebrow">YOUR BREAKFAST</p><h2 id="mobile-cart-heading">我的餐點</h2></div>
+      <form method="dialog"><button class="icon-button" aria-label="關閉購物車">×</button></form>
+    </div>
+    <div class="cart-list mobile-cart-list" id="mobile-cart-list"></div>
+    <div class="cart-empty" id="mobile-cart-empty"><p>還沒有選擇餐點</p><span>回到菜單挑選喜歡的早餐</span></div>
+    <div class="cart-bottom">
+      <div class="subtotal-row"><span>小計</span><strong id="mobile-dialog-total">NT$ 0</strong></div>
+      <p class="payment-note"><span aria-hidden="true">●</span> 到店付款・內用</p>
+      <button class="primary-button checkout-button" id="mobile-checkout-button" type="button" disabled><span>確認餐點</span><span aria-hidden="true">→</span></button>
+    </div>
+  </dialog>
+
+  <dialog class="site-dialog checkout-dialog" id="checkout-dialog" aria-labelledby="checkout-heading">
+    <form method="dialog" class="dialog-dismiss-form"><button class="icon-button dialog-close" aria-label="關閉">×</button></form>
+    <div class="checkout-content" id="checkout-content"></div>
+  </dialog>
+
+  <footer class="site-footer"><span>朝日早餐</span><span>早晨的好滋味，從這裡開始。</span></footer>
+</body>
+</html>
