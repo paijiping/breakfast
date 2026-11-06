@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f6ef">
+  <title>店家登入｜朝日早餐</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin.css">
+  <script defer src="/js/admin-login.js"></script>
+</head>
+<body class="admin-login-body">
+  <main class="login-shell">
+    <a class="admin-brand" href="/" aria-label="返回朝日早餐點餐頁">
+      <span class="admin-brand-mark" aria-hidden="true">朝</span>
+      <span>朝日早餐<small>店家管理</small></span>
+    </a>
+    <section class="login-panel" aria-labelledby="login-title">
+      <p class="admin-eyebrow">STORE ACCESS</p>
+      <h1 id="login-title">管理者登入</h1>
+      <p class="login-copy">登入後管理店內訂單與菜單。</p>
+      <form id="login-form" class="login-form">
+        <label for="admin-username">管理帳號</label>
+        <input id="admin-username" name="username" type="text" value="admin" autocomplete="username" required maxlength="128">
+        <label for="admin-password">管理密碼</label>
+        <input id="admin-password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+        <p id="login-message" class="form-message" role="alert" aria-live="polite" hidden></p>
+        <button id="login-submit" class="admin-primary-button" type="submit">登入管理頁</button>
+      </form>
+    </section>
+    <a class="return-link" href="/">返回顧客點餐頁</a>
+  </main>
+</body>
+</html>

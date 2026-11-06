@@ -43,7 +43,9 @@
   const cart = [];
 
   const formatPrice = (amount) => `NT$ ${amount.toLocaleString("zh-TW")}`;
-  const imageUrl = (id, width = 720) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=82`;
+  const imageUrl = (image, width = 720) => image.startsWith("https://")
+    ? image
+    : `https://images.unsplash.com/${image}?auto=format&fit=crop&w=${width}&q=82`;
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[character]);
@@ -71,7 +73,7 @@
 
     elements.productGrid.innerHTML = visibleProducts.map((product) => `
       <article class="product-card">
-        <img class="product-image" src="${imageUrl(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position:${escapeHtml(product.imagePosition)}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=720&q=82'">
+        <img class="product-image" src="${escapeHtml(imageUrl(product.image))}" alt="${escapeHtml(product.name)}" loading="lazy" style="object-position:${escapeHtml(product.imagePosition)}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=720&q=82'">
         <div class="product-info">
           <div class="product-title-row">
             <h3 class="product-title">${escapeHtml(product.name)}</h3>
@@ -143,7 +145,7 @@
     if (!selectedProduct) return;
     selectedQuantity = 1;
     elements.productDialogContent.innerHTML = `
-      <img class="product-dialog-image" src="${imageUrl(selectedProduct.image, 900)}" alt="${escapeHtml(selectedProduct.name)}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=82'">
+      <img class="product-dialog-image" src="${escapeHtml(imageUrl(selectedProduct.image, 900))}" alt="${escapeHtml(selectedProduct.name)}" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=82'">
       <div class="product-dialog-inner">
         <div class="product-dialog-title-row"><h2 id="product-dialog-title">${escapeHtml(selectedProduct.name)}</h2><strong>${formatPrice(selectedProduct.price)}</strong></div>
         <p>${escapeHtml(selectedProduct.description)}</p>

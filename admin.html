@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f6ef">
+  <title>店家管理｜朝日早餐</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin.css">
+  <script defer src="/js/admin-dashboard.js"></script>
+  <script defer src="/js/admin.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a class="admin-brand" href="/" aria-label="朝日早餐顧客點餐頁">
+      <span class="admin-brand-mark" aria-hidden="true">朝</span>
+      <span>朝日早餐<small>店家管理</small></span>
+    </a>
+    <div class="admin-header-actions">
+      <a class="return-link" href="/">顧客點餐頁</a>
+      <button id="logout-button" class="admin-secondary-button" type="button">登出</button>
+    </div>
+  </header>
+  <main class="admin-layout">
+    <nav class="admin-nav" aria-label="管理功能">
+      <button class="admin-nav-button" type="button" data-tab="dashboard">營收</button>
+      <button class="admin-nav-button" type="button" data-tab="orders" aria-current="page">訂單</button>
+      <button class="admin-nav-button" type="button" data-tab="products">商品</button>
+      <button class="admin-nav-button" type="button" data-tab="categories">分類</button>
+    </nav>
+    <section class="admin-content" id="admin-content" aria-live="polite" aria-busy="true">
+      <p class="admin-loading">正在載入管理資料…</p>
+    </section>
+  </main>
+  <dialog id="editor-dialog" class="admin-dialog">
+    <form method="dialog" class="admin-dialog-close"><button class="admin-icon-button" aria-label="關閉編輯視窗">×</button></form>
+    <div id="editor-content"></div>
+  </dialog>
+</body>
+</html>
