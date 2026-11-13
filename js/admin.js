@@ -21,7 +21,7 @@
 
   async function api(url, options = {}) {
     const response = await fetch(url, {
-      credentials: "same-origin",
+      credentials: "include",
       headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
       ...options
     });

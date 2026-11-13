@@ -12,6 +12,7 @@ from typing import List, Literal, Optional
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, conint, constr, validator
@@ -264,6 +265,13 @@ def create_app(database_path=None):
     initialize_database(configured_database)
 
     app = FastAPI(title="早餐店點餐 API", version="1.0.0")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.database_path = configured_database
     admin_session_secret = secrets.token_bytes(32)
 
@@ -301,24 +309,11 @@ def create_app(database_path=None):
             and hmac.compare_digest(expected_signature, supplied_signature)
         )
 
-    def require_same_origin(request):
-        origin = request.headers.get("origin", "")
-        parsed_origin = urlsplit(origin)
-        request_host = request.headers.get("host", "")
-        if (
-            parsed_origin.scheme not in ("http", "https")
-            or not parsed_origin.netloc
-            or parsed_origin.netloc.casefold() != request_host.casefold()
-        ):
-            raise HTTPException(status_code=403, detail="請求來源驗證失敗。")
-
     def require_admin(request: Request):
         if not has_admin_account():
             raise HTTPException(status_code=503, detail="店家管理功能尚未啟用。")
         if not has_valid_admin_session(request):
             raise HTTPException(status_code=401, detail="請先登入店家管理頁。")
-        if request.method not in ("GET", "HEAD", "OPTIONS"):
-            require_same_origin(request)
 
     @app.get("/api/admin/session")
     def get_admin_session(request: Request):
@@ -329,10 +324,9 @@ def create_app(database_path=None):
         return {"authenticated": True}
 
     @app.post("/api/admin/session")
-    def create_admin_session(payload: AdminLoginInput, request: Request, response: Response):
+    def create_admin_session(payload: AdminLoginInput, response: Response):
         if not has_admin_account():
             raise HTTPException(status_code=503, detail="店家管理功能尚未啟用。")
-        require_same_origin(request)
         with connect_database(app.state.database_path) as connection:
             admin = connection.execute(
                 "SELECT username, password_hash FROM admin_users WHERE username = ?",
@@ -346,8 +340,8 @@ def create_app(database_path=None):
             issue_admin_session(),
             max_age=ADMIN_SESSION_MAX_AGE,
             httponly=True,
-            secure=request.url.scheme == "https",
-            samesite="strict",
+            secure=True,
+            samesite="none",
             path="/",
         )
         return {"authenticated": True}
@@ -361,8 +355,8 @@ def create_app(database_path=None):
         response.delete_cookie(
             ADMIN_SESSION_COOKIE,
             httponly=True,
-            secure=request.url.scheme == "https",
-            samesite="strict",
+            secure=True,
+            samesite="none",
             path="/",
         )
         return {"authenticated": False}

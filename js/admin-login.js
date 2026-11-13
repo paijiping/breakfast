@@ -12,7 +12,7 @@
 
   async function checkExistingSession() {
     try {
-      const response = await fetch("/api/admin/session", { credentials: "same-origin" });
+      const response = await fetch("/api/admin/session", { credentials: "include" });
       if (response.ok) {
         window.location.replace("/admin");
         return;
@@ -30,7 +30,7 @@
     try {
       const response = await fetch("/api/admin/session", {
         method: "POST",
-        credentials: "same-origin",
+        credentials: "include",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ username: usernameInput.value, password: passwordInput.value })
       });

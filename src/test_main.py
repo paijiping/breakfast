@@ -19,7 +19,7 @@ class BreakfastApiTests(unittest.TestCase):
             os.environ,
             {"BREAKFAST_ADMIN_USERNAME": "admin", "BREAKFAST_ADMIN_PASSWORD": "manager-secret"},
         ):
-            self.client = TestClient(create_app(database_path))
+            self.client = TestClient(create_app(database_path), base_url="https://testserver")
 
     def tearDown(self):
         self.client.close()
@@ -48,7 +48,7 @@ class BreakfastApiTests(unittest.TestCase):
             os.environ,
             {"BREAKFAST_ADMIN_USERNAME": "admin", "BREAKFAST_ADMIN_PASSWORD": ""},
         ):
-            client = TestClient(create_app(database_path))
+            client = TestClient(create_app(database_path), base_url="https://testserver")
             try:
                 self.assertEqual(client.get("/api/admin/session").status_code, 503)
                 response = client.post(
@@ -63,7 +63,7 @@ class BreakfastApiTests(unittest.TestCase):
     def test_default_admin_credentials_are_admin_and_1234(self):
         database_path = Path(self.temporary_directory.name) / "default-admin.sqlite3"
         with patch.dict(os.environ, {}, clear=True):
-            client = TestClient(create_app(database_path))
+            client = TestClient(create_app(database_path), base_url="https://testserver")
         try:
             wrong_username = client.post(
                 "/api/admin/session",
@@ -99,13 +99,9 @@ class BreakfastApiTests(unittest.TestCase):
         self.assertEqual(login.status_code, 200)
         self.assertEqual(persisted_login.status_code, 200)
 
-    def test_admin_session_requires_password_origin_and_expires_on_logout(self):
+    def test_admin_session_authenticates_all_origins_and_expires_on_logout(self):
         origin = {"Origin": "http://testserver"}
         with patch.dict(os.environ, {"BREAKFAST_ADMIN_USERNAME": "admin", "BREAKFAST_ADMIN_PASSWORD": "manager-secret"}):
-            self.assertEqual(
-                self.client.post("/api/admin/session", json={"username": "admin", "password": "manager-secret"}).status_code,
-                403,
-            )
             invalid = self.client.post(
                 "/api/admin/session", json={"username": "admin", "password": "wrong"}, headers=origin
             )
@@ -113,22 +109,52 @@ class BreakfastApiTests(unittest.TestCase):
             self.assertEqual(self.client.get("/api/admin/menu").status_code, 401)
 
             login = self.client.post(
-                "/api/admin/session", json={"username": "admin", "password": "manager-secret"}, headers=origin
+                "/api/admin/session",
+                json={"username": "admin", "password": "manager-secret"},
+                headers={"Origin": "https://frontend.example"},
             )
             self.assertEqual(login.status_code, 200)
             self.assertTrue(login.json()["authenticated"])
+            self.assertEqual(
+                login.headers["access-control-allow-origin"],
+                "https://frontend.example",
+            )
+            self.assertEqual(login.headers["access-control-allow-credentials"], "true")
             cookie_header = login.headers["set-cookie"].lower()
             self.assertIn("httponly", cookie_header)
-            self.assertIn("samesite=strict", cookie_header)
+            self.assertIn("samesite=none", cookie_header)
+            self.assertIn("secure", cookie_header)
             self.assertEqual(self.client.get("/api/admin/session").status_code, 200)
             self.assertEqual(
-                self.client.post("/api/admin/categories", json={"label": "測試"}).status_code,
-                403,
+                self.client.post(
+                    "/api/admin/categories",
+                    json={"label": "跨源測試"},
+                    headers={"Origin": "https://frontend.example"},
+                ).status_code,
+                201,
             )
 
-            logout = self.client.delete("/api/admin/session", headers=origin)
+            logout = self.client.delete(
+                "/api/admin/session",
+                headers={"Origin": "https://frontend.example"},
+            )
             self.assertEqual(logout.status_code, 200)
             self.assertEqual(self.client.get("/api/admin/session").status_code, 401)
+
+    def test_cors_preflight_allows_any_origin_with_credentials(self):
+        response = self.client.options(
+            "/api/admin/menu",
+            headers={
+                "Origin": "https://frontend.example",
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "https://frontend.example")
+        self.assertEqual(response.headers["access-control-allow-credentials"], "true")
+        self.assertIn("GET", response.headers["access-control-allow-methods"])
 
     def test_admin_can_manage_categories_and_products_without_hard_delete(self):
         origin = {"Origin": "http://testserver"}

@@ -2,13 +2,13 @@
 
 ## 目的
 
-使用 Python FastAPI 提供早餐菜單、內用點餐及店家管理 API。菜單與正式訂單儲存於 SQLite，顧客端和管理頁透過同源 Web API 存取資料。
+使用 Python FastAPI 提供早餐菜單、內用點餐及店家管理 API。菜單與正式訂單儲存於 SQLite；顧客端與管理頁可由任意來源跨源存取 API。
 
 ## 技術與檔案
 
 - FastAPI 後端程式碼存放於專案根目錄 `src/`。
 - SQLite 資料庫存放於專案根目錄 `data/breakfast.sqlite3`；首次啟動建立資料表及初始菜單。
-- FastAPI 同時提供專案根目錄的前端頁面及靜態檔案，前端以同源相對路徑呼叫 `/api`。
+- FastAPI 同時提供專案根目錄的前端頁面及靜態檔案，內建前端以相對路徑呼叫 `/api`。
 - 從專案根目錄以 `uvicorn src.main:app --reload` 啟動開發伺服器。
 - 安裝執行與測試依賴：`python -m pip install -r requirements.txt`；執行測試：`python -m unittest discover -s src -v`。
 - SQLite 啟用外鍵限制；建立訂單及明細必須在同一交易中完成。
@@ -142,6 +142,8 @@ erDiagram
 
 ## API
 
+所有 API 允許任意來源進行跨源請求，包含管理 API；管理 session cookie 使用 `SameSite=None; Secure`，並允許跨源憑證。這表示任何網站都可能透過已登入使用者的瀏覽器讀取或操作管理 API，僅應在明確接受此風險的環境使用。
+
 ### 1. 取得菜單
 
 - 目的：取得目前啟用的分類及可供應商品。
@@ -208,7 +210,7 @@ erDiagram
 
 ## 店家管理 API
 
-所有路由使用同源 `/api/admin` 前綴。除登入路由外，均須有有效管理 session；首次初始化時帳號預設為 `admin`、密碼為 `1234`，可用 `BREAKFAST_ADMIN_USERNAME`、`BREAKFAST_ADMIN_PASSWORD` 提供首次帳號資料。資料庫已有帳號時不會被環境變數覆寫；明確將任一變數設為空字串時管理功能回覆 503，不得匿名開放。登入成功以 8 小時有效的簽章 cookie 維持 session，設定 HttpOnly、SameSite=Strict，HTTPS 請求設定 Secure；寫入請求須驗證 Origin。密碼以 PBKDF2-SHA256 雜湊存於 SQLite，session 不存入 SQLite。
+所有路由使用 `/api/admin` 前綴。除登入路由外，均須有有效管理 session；首次初始化時帳號預設為 `admin`、密碼為 `1234`，可用 `BREAKFAST_ADMIN_USERNAME`、`BREAKFAST_ADMIN_PASSWORD` 提供首次帳號資料。資料庫已有帳號時不會被環境變數覆寫；明確將任一變數設為空字串時管理功能回覆 503，不得匿名開放。登入成功以 8 小時有效的簽章 cookie 維持 session，設定 HttpOnly、SameSite=None、Secure；管理請求允許任意來源跨源存取，不驗證 Origin。密碼以 PBKDF2-SHA256 雜湊存於 SQLite，session 不存入 SQLite。
 
 ### 管理登入與登出
 

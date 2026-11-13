@@ -58,7 +58,7 @@
 
 ## 店家管理頁
 
-店家管理頁與顧客點餐頁分開，登入網址為 `/admin/login`，管理主畫面為 `/admin`，使用同源管理 API。首次建立資料庫時預設帳號為 `admin`、密碼為 `1234`；帳號與密碼雜湊存於 SQLite，密碼以 PBKDF2-SHA256 雜湊，不存明文。`BREAKFAST_ADMIN_USERNAME`、`BREAKFAST_ADMIN_PASSWORD` 僅在尚無帳號時提供初始化值；資料庫已有帳號時不會被環境變數覆寫。明確將任一變數設為空字串會停用管理 API。瀏覽器以 8 小時有效、HttpOnly、SameSite=Strict session cookie 維持登入，HTTPS 時設定 Secure；密碼不存入 localStorage 或 sessionStorage。
+店家管理頁與顧客點餐頁分開，登入網址為 `/admin/login`，管理主畫面為 `/admin`。後端允許任意來源跨源存取管理 API；跨源管理頁需以 `credentials: "include"` 傳送 session cookie。這會讓任何網站都可能透過已登入使用者的瀏覽器讀取或操作管理 API，僅應在明確接受此風險的環境使用。首次建立資料庫時預設帳號為 `admin`、密碼為 `1234`；帳號與密碼雜湊存於 SQLite，密碼以 PBKDF2-SHA256 雜湊，不存明文。`BREAKFAST_ADMIN_USERNAME`、`BREAKFAST_ADMIN_PASSWORD` 僅在尚無帳號時提供初始化值；資料庫已有帳號時不會被環境變數覆寫。明確將任一變數設為空字串會停用管理 API。瀏覽器以 8 小時有效、HttpOnly、SameSite=None、Secure session cookie 維持登入；密碼不存入 localStorage 或 sessionStorage。
 
 ### 管理者登入與進入管理畫面
 
@@ -86,4 +86,4 @@
 - 營收摘要與圖表僅計入已完成訂單；各期間柱狀圖金額加總須等於對應摘要，切換期間及重新整理後仍正確，無營收時顯示零與提示。手機可在圖表內水平捲動，不造成整頁橫向溢出。
 - 訂單狀態更新後，訂單內容、金額及明細快照不變；菜單更新後，顧客端仍只取得啟用分類及可供應商品。
 - 停用商品或分類後，顧客端菜單隱藏該項目，但舊訂單仍可查閱。
-- 管理 API、登入安全與 SQLite 遷移由後端提供；所有寫入 API 驗證同源 Origin，未登入不可讀取或修改管理資料。
+- 管理 API、登入安全與 SQLite 遷移由後端提供；所有 API 允許任意來源跨源存取，但管理資料仍須有效 session 才能讀取或修改。
